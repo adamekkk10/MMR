@@ -37,16 +37,23 @@ def main() -> int:
     identity_path = data_dir / "agent.json"
     install_path: Path = args.install_config or (data_dir / "install_config.json")
 
+    # The standalone .exe ships with its config compiled in via the build
+    # worker's templating step. We always prefer that over a sidecar file —
+    # that's the whole point of the portable build.
+    install: InstallConfig | None = InstallConfig.load_baked()
+    if install is None and install_path.exists():
+        install = InstallConfig.load(install_path)
+
     identity = AgentIdentity.load(identity_path)
     if identity is None:
-        if not install_path.exists():
+        if install is None:
             log.error(
-                "No agent identity and no install_config.json at %s. "
-                "Provide one with the server URL and enrollment token.",
+                "No agent identity and no install config (neither baked nor at %s). "
+                "Provide install_config.json with the server URL and enrollment token, "
+                "or rebuild the .exe via the panel's installer generator.",
                 install_path,
             )
             return 2
-        install = InstallConfig.load(install_path)
         log.info("Enrolling with server %s", install.server_url)
         identity = enroll(install)
         identity.save(identity_path)
@@ -55,12 +62,7 @@ def main() -> int:
     if args.once_enroll:
         return 0
 
-    verify_tls = True
-    if install_path.exists():
-        try:
-            verify_tls = InstallConfig.load(install_path).verify_tls
-        except Exception:
-            pass
+    verify_tls = install.verify_tls if install is not None else True
 
     client = AgentClient(identity, verify_tls=verify_tls)
     try:

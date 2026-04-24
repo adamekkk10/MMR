@@ -41,6 +41,27 @@ class InstallConfig:
             tags=data.get("tags", []),
         )
 
+    @classmethod
+    def load_baked(cls) -> "InstallConfig | None":
+        """Read a build-time injected config if the standalone .exe includes one.
+
+        The server's installer generator writes `rmm_agent/baked.py` with SERVER_URL,
+        ENROLLMENT_TOKEN, VERIFY_TLS, and TAGS constants into a temp copy of the
+        source tree before PyInstaller bundles it. Returns None in normal dev
+        checkouts (no baked.py), in which case callers fall back to the on-disk
+        install_config.json path used by the MSI/DEB/SH installers.
+        """
+        try:
+            from . import baked  # type: ignore[attr-defined]
+        except ImportError:
+            return None
+        return cls(
+            server_url=str(baked.SERVER_URL),
+            enrollment_token=str(baked.ENROLLMENT_TOKEN),
+            verify_tls=bool(getattr(baked, "VERIFY_TLS", True)),
+            tags=list(getattr(baked, "TAGS", []) or []),
+        )
+
 
 @dataclass
 class AgentIdentity:
