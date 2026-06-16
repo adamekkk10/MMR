@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Agent runtime data
+agent/data/
+*.agent.json
+
+# Build worker — per-build generated file, never committed
+agent/rmm_agent/baked.py
+backend/var/
+
+
+# Database
+*.db
+*.sqlite3
+
+# Certs
+*.pem
+*.key
+*.crt
+!**/example.pem
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# PyInstaller
+build/
+*.spec
